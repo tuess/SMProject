@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
+        default-autowire="byName">
+
+    <!--配置扫描器（为了注解的使用）base-package写的太模糊会导致运行很慢-->
+    <context:component-scan base-package="com.dao,com.service,com.entity"/>
+
+    <!--加载db.properties文件-->
+    <bean id="config" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+        <property name="locations">
+            <array>
+                <value>classpath:db.properties</value>
+            </array>
+        </property>
+    </bean>
+
+    <!--配置数据库信息（替代mybatis的conf.xml文件）-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${driver}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+    <!--在SpringIOC容器中创建Mybatis的核心类SqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--配置数据源-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--加载mapper.xml路径-->
+        <property name="mapperLocations" value="com/mapper/*.xml"/>
+    </bean>
+
+    <!--自动生成mapper对象，不需要自己写接口实现类，也就是不需要StudentMapperImpl，缺点是有一个mapper就需要配置一次-->
+    <!--<bean id="studentMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="com.mapper.StudentMapper"/>
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>-->
+
+    <!--批量生成mapper对象
+        批量产生mapper对象在SpringIOC中的id值默认为接口名，首字母小写-->
+    <bean id="mappers" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--指定批量产生那个包的mapper对象-->
+        <property name="basePackage" value="com.mapper"/>
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>
+
+    <!--可以用注解来做-->
+<!--    <bean id="studentService" class="com.service.impl.StudentServiceImpl">
+        <property name="studentMapper" ref="studentMapper"/>
+    </bean>-->
+
+</beans>
